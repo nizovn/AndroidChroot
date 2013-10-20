@@ -1,0 +1,10 @@
+{
+	"id": "com.nizovn.androidchroot",
+	"version": "1.0.0",
+	"vendor": "NIN",
+	"type": "pdk",
+	"main": "client",
+	"title": "AndroidChroot",
+	"icon": "icon.png",
+	"requiredMemory": 12
+}
