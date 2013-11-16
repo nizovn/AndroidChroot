@@ -1,4 +1,5 @@
 ROOT_PATH=/media/internal/AndroidChroot
+
 if [ -f $ROOT_PATH/root/init ]; then
 echo "already running"
 exit 1

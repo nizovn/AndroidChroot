@@ -1,0 +1,14 @@
+{
+  "role": {
+     "exeName":"/var/usr/sbin/com.nizovn.androidchroot.shutdown.c",
+     "type": "regular",
+     "allowedNames": ["com.nizovn.androidchroot.shutdown.c"]
+  },
+  "permissions": [
+    {
+      "service":"com.nizovn.androidchroot.shutdown.c",
+      "inbound":["*"],
+      "outbound":["*"]
+    }
+  ]
+}

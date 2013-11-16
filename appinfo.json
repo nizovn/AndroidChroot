@@ -1,10 +1,15 @@
 {
+	"title": "AndroidChroot",
 	"id": "com.nizovn.androidchroot",
 	"version": "1.0.0",
-	"vendor": "NIN",
-	"type": "pdk",
-	"main": "client",
-	"title": "AndroidChroot",
+	"release_date": "16-November-2013",
+	"vendor": "Nikolay Nizov",
+	"vendor_email": "nizovn@gmail.com",
+	"type": "web",
+	"noWindow" : true,
+	"noDeprecatedStyles" : true,
+	"main": "index.html",
 	"icon": "icon.png",
-	"requiredMemory": 12
+	"keywords": ["android"],
+	"uiRevision": 2
 }

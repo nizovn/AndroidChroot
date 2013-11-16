@@ -1,16 +1,32 @@
+/*=============================================================================
+ Copyright (C) 2013 Nikolay Nizov <nizovn@gmail.com>
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU General Public License
+ as published by the Free Software Foundation; either version 2
+ of the License, or (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ =============================================================================*/
+
 #include <stdio.h>
-#include <math.h>
 #include "SDL.h"
-#include "SDL_image.h"
-#include <GLES/gl.h>
-#include <GLES/glext.h>
+#include "luna_methods.h"
 
 #include "PDL.h"
 #include <linux/input.h>
 #include <linux/uinput.h>
 #include <unistd.h>
 #include <linux/types.h>
-#define ROOT_PATH "/media/cryptofs/apps/usr/palm/applications/com.nizovn.androidchroot/"
+#include <stdbool.h>
+
 #define UINPUT_LOCATION "/media/internal/AndroidChroot/root/dev/uinput"
 #define SLEEP_FILE_NAME "/media/internal/AndroidChroot/root/AndroidChroot/wait_for_fb_sleep"
 #define WAKE_FILE_NAME "/media/internal/AndroidChroot/root/AndroidChroot/wait_for_fb_wake"
@@ -24,6 +40,8 @@
 int w,h;
 bool shutdown=true;
 int fd;
+bool sigexit=false;
+bool sendshutdown=false;
 struct fb_var_screeninfo vi;
 void set_fb1(void)
 {
@@ -125,28 +143,56 @@ void open_uinput()
 		fprintf(stderr, "error create\n");
 
 }
-void send_sleep_or_wake(){
+void send_sleep_or_wake(bool active){
 	send_uevent(uinput_fd, EV_KEY, KEY_POWER, 1);
 	send_uevent(uinput_fd, EV_SYN, SYN_REPORT, 0);
 	printf("Sending screen\n");
 	send_uevent(uinput_fd, EV_KEY, KEY_POWER, 0);
 	send_uevent(uinput_fd, EV_SYN, SYN_REPORT, 0);
-	int fd_wait=open(SLEEP_FILE_NAME,O_NONBLOCK|O_WRONLY);
-	if(fd_wait>0)system("echo sleeping > " SLEEP_FILE_NAME);
-	else system("echo awake > " WAKE_FILE_NAME);
-	close(fd_wait);
+	int fd_wake=open(WAKE_FILE_NAME,O_NONBLOCK|O_WRONLY);
+	int fd_sleep=open(SLEEP_FILE_NAME,O_NONBLOCK|O_WRONLY);
+	if((fd_wake>0)&&(active))system("echo awake > " WAKE_FILE_NAME);
+	if((fd_sleep>0)&&(!active))system("echo sleeping > " SLEEP_FILE_NAME);
+	close(fd_wake);
+	close(fd_sleep);
 }
-
-
+void cleanup(){
+	close(fd);
+	ioctl(uinput_fd, UI_DEV_DESTROY);
+	close(uinput_fd);
+	SDL_Quit();
+}
+void handler1(int sig){
+	sigexit=true;
+	return;
+}
+void handler2(int sig){
+	sendshutdown=true;
+	return;
+}
 int main(int argc, char** argv)
 {
 
 	if (Init() == false)
 		return -1;
-	system(ROOT_PATH "start.sh");
+	struct sigaction act1,act2;
+	memset(&act1,0,sizeof(act1));
+	memset(&act2,0,sizeof(act2));
+	act1.sa_handler=handler1;
+	act2.sa_handler=handler2;
+	sigset_t set1,set2;
+	sigemptyset(&set1);
+	sigemptyset(&set2);
+	sigaddset(&set1,SIGUSR1);
+	sigaddset(&set2,SIGUSR2);
+	act1.sa_mask=set1;
+	act2.sa_mask=set2;
+	sigaction(SIGUSR1, &act1,0);
+	sigaction(SIGUSR2, &act2,0);
 	open_uinput();
 	SDL_Event Event;
 	bool active=true;
+	send_sleep_or_wake(active);
 	while (1) {
 		SDL_Delay(10);
 		if (active) {
@@ -156,39 +202,29 @@ int main(int argc, char** argv)
 		else{
 			SDL_Delay(1000);
 		} 
+		if(sigexit){
+			cleanup();
+			exit(1);
+		};
+		if((sendshutdown)&&(active)){
+			sendshutdown=false;	
+			send_uevent(uinput_fd, EV_KEY, KEY_POWER, 1);
+			send_uevent(uinput_fd, EV_SYN, SYN_REPORT, 0);
+			printf("Sending power on\n");
+			SDL_Delay(1000);
+			send_uevent(uinput_fd, EV_KEY, KEY_POWER, 0);
+			send_uevent(uinput_fd, EV_SYN, SYN_REPORT, 0);
+			printf("Sending power off\n");
+ 		};
 		int x,y,k;
 		while (SDL_PollEvent(&Event)) {
 			switch (Event.type) {
 				case SDL_MOUSEBUTTONDOWN:
-					if(SDL_GetMultiMouseState(3,NULL,NULL)&SDL_BUTTON(1)){
-						SDL_Delay(500);
-						SDL_PumpEvents();
-						if(SDL_GetMultiMouseState(4,NULL,NULL)&SDL_BUTTON(1)){
-							send_uevent(uinput_fd, EV_KEY, KEY_POWER, 1);
-							send_uevent(uinput_fd, EV_SYN, SYN_REPORT, 0);
-							printf("Sending power on\n");
-							SDL_Delay(1000);
-							send_uevent(uinput_fd, EV_KEY, KEY_POWER, 0);
-							send_uevent(uinput_fd, EV_SYN, SYN_REPORT, 0);
-							printf("Sending power off\n");
-							if(shutdown){
-								system(ROOT_PATH "shutdown.sh &");
-								shutdown=false;
-							}
-						}
-						else
-							if(SDL_GetMultiMouseState(3,NULL,NULL)&SDL_BUTTON(1)){
-								send_uevent(uinput_fd, EV_KEY, KEY_HOME, 1);
-								send_uevent(uinput_fd, EV_SYN, SYN_REPORT, 0);
-								printf("Sending home\n");
-								send_uevent(uinput_fd, EV_KEY, KEY_HOME, 0);
-								send_uevent(uinput_fd, EV_SYN, SYN_REPORT, 0);
-							}
-					}
 				case SDL_MOUSEMOTION:
 				case SDL_MOUSEBUTTONUP:
 					k=0;
-					for(int i=0;i<3;i++){
+					int i;
+					for(i=0;i<5;i++){
 						if(SDL_GetMultiMouseState(i,&x,&y)&SDL_BUTTON(1)){
 							send_uevent(uinput_fd, EV_ABS, ABS_MT_POSITION_X, x);
 							send_uevent(uinput_fd, EV_ABS, ABS_MT_POSITION_Y, y);
@@ -226,13 +262,11 @@ int main(int argc, char** argv)
 				case SDL_ACTIVEEVENT:
 					if (Event.active.state==SDL_APPACTIVE) {
 						active=Event.active.gain;
-						send_sleep_or_wake();
+						send_sleep_or_wake(active);
 					}
 					break;
 				case SDL_QUIT:
-					close(fd);
-					close(uinput_fd);
-					SDL_Quit();
+					cleanup();
 					exit(0);
 					break;
 				default:
@@ -240,8 +274,7 @@ int main(int argc, char** argv)
 			}
 		}
 	}
-	close(fd);
-	close(uinput_fd);
-	SDL_Quit();
+	cleanup();
+	exit(0);
 	return 0;
 }

@@ -1,0 +1,83 @@
+#!/bin/sh
+
+APPID=com.nizovn.androidchroot
+CSRVID=com.nizovn.androidchroot.main.c
+CSRVID2=com.nizovn.androidchroot.shutdown.c
+CSRVID3=com.nizovn.androidchroot.client.c
+
+APPS=/media/cryptofs/apps
+
+[ -d ${APPS} ] || { echo "Requires webOS 1.3.5 or later" ; exit 1 ; }
+
+APPDIR=${APPS}/usr/palm/applications/${APPID}
+CSRVDIR=${APPS}/usr/palm/applications/${APPID}/c-service
+
+# Remove the C service executable
+rm -f /var/usr/sbin/${CSRVID}
+rm -f /var/usr/sbin/${CSRVID2}
+rm -f /var/usr/sbin/${CSRVID3}
+
+# Remove the dbus service
+rm -f /var/palm/system-services/${CSRVID}.service
+rm -f /var/palm/system-services/${CSRVID2}.service
+rm -f /var/palm/system-services/${CSRVID3}.service
+
+# Remove the ls2 roles
+rm -f /var/palm/ls2/roles/prv/${CSRVID}.json /var/palm/ls2/roles/pub/${CSRVID}.json
+rm -f /var/palm/ls2/roles/prv/${CSRVID2}.json /var/palm/ls2/roles/pub/${CSRVID2}.json
+rm -f /var/palm/ls2/roles/prv/${CSRVID3}.json /var/palm/ls2/roles/pub/${CSRVID3}.json
+
+# Stop the C service if running
+/sbin/stop ${CSRVID} || true
+/usr/bin/killall -9 ${CSRVID} || true
+/sbin/stop ${CSRVID2} || true
+/usr/bin/killall -9 ${CSRVID2} || true
+/sbin/stop ${CSRVID3} || true
+/usr/bin/killall -9 ${CSRVID3} || true
+
+# Remove the upstart script
+rm -f /var/palm/event.d/${CSRVID}
+rm -f /var/palm/event.d/${CSRVID2}
+rm -f /var/palm/event.d/${CSRVID3}
+
+# Turn off Android
+${APPS}/usr/palm/applications/${APPID}/scripts/kill.sh
+${APPS}/usr/palm/applications/${APPID}/scripts/umount.sh
+
+# Install the C service executable
+mkdir -p /var/usr/sbin/
+install -m 755 ${CSRVDIR}/androidchroot_main_service /var/usr/sbin/${CSRVID}
+install -m 755 ${CSRVDIR}/androidchroot_shutdown_service /var/usr/sbin/${CSRVID2}
+install -m 755 ${CSRVDIR}/androidchroot_client_service /var/usr/sbin/${CSRVID3}
+
+# Install the dbus service
+mkdir -p /var/palm/ls2/services/prv /var/palm/ls2/services/pub
+cp ${CSRVDIR}/${CSRVID}.service /var/palm/ls2/services/prv/${CSRVID}.service
+cp ${CSRVDIR}/${CSRVID}.service /var/palm/ls2/services/pub/${CSRVID}.service
+cp ${CSRVDIR}/${CSRVID2}.service /var/palm/ls2/services/prv/${CSRVID2}.service
+cp ${CSRVDIR}/${CSRVID2}.service /var/palm/ls2/services/pub/${CSRVID2}.service
+cp ${CSRVDIR}/${CSRVID3}.service /var/palm/ls2/services/prv/${CSRVID3}.service
+cp ${CSRVDIR}/${CSRVID3}.service /var/palm/ls2/services/pub/${CSRVID3}.service
+
+# Install the ls2 roles
+mkdir -p /var/palm/ls2/roles/prv /var/palm/ls2/roles/pub
+cp ${CSRVDIR}/${CSRVID}.json /var/palm/ls2/roles/prv/${CSRVID}.json
+cp ${CSRVDIR}/${CSRVID}.json /var/palm/ls2/roles/pub/${CSRVID}.json
+cp ${CSRVDIR}/${CSRVID2}.json /var/palm/ls2/roles/prv/${CSRVID2}.json
+cp ${CSRVDIR}/${CSRVID2}.json /var/palm/ls2/roles/pub/${CSRVID2}.json
+cp ${CSRVDIR}/${CSRVID3}.json /var/palm/ls2/roles/prv/${CSRVID3}.json
+cp ${CSRVDIR}/${CSRVID3}.json /var/palm/ls2/roles/pub/${CSRVID3}.json
+/usr/bin/ls-control scan-services || true
+
+# Install the upstart script
+mkdir -p /var/palm/event.d
+cp ${CSRVDIR}/${CSRVID} /var/palm/event.d/${CSRVID}
+cp ${CSRVDIR}/${CSRVID2} /var/palm/event.d/${CSRVID2}
+cp ${CSRVDIR}/${CSRVID3} /var/palm/event.d/${CSRVID3}
+
+# Start the C service
+/sbin/start ${CSRVID}
+/sbin/start ${CSRVID2}
+/sbin/start ${CSRVID3}
+
+exit 0

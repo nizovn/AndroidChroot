@@ -1,0 +1,10 @@
+{
+  "id": "com.nizovn.androidchroot",
+  "package_format_version": 2,
+  "loc_name": "AndroidChroot",
+  "version": "1.0.0",
+  "icon": "icon.png",
+  "miniicon": "icon.png",
+  "vendor": "Nikolay Nizov",
+  "app": "com.nizovn.androidchroot",
+}

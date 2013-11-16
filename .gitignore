@@ -1,3 +1,7 @@
-Build_Device/
-STAGING/
+package
 *.ipk
+c-service/*.o
+c-service/client
+c-service/client_service
+c-service/main_service
+c-service/shutdown_service

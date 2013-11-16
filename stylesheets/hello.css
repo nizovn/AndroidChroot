@@ -1,0 +1,31 @@
+/*
+ * Main Scene Styles
+ */
+.main .palm-page-header-wrapper .icon
+{
+	width: 76px;
+	height: 75px;
+	background: url(../icon.png) center center no-repeat;
+}
+.main .palm-page-header-wrapper .title
+{
+	padding-left: 80px;
+}
+.main .palm-page-header-wrapper .title.main
+{
+	font-size: 30px;
+	padding-top: 5px;
+	padding-bottom: 0px;
+}
+.main .palm-page-header-wrapper .title .version
+{
+	font-size: 12px;
+	color: #888;
+	text-transform: lowercase;
+}
+.main .palm-page-header-wrapper .title.sub
+{
+	font-size: 14px;
+	padding-top: 0px;
+	margin-top: 0px;
+}

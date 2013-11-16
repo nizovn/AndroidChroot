@@ -1,0 +1,14 @@
+{
+  "role": {
+     "exeName":"/var/usr/sbin/com.nizovn.androidchroot.client.c",
+     "type": "regular",
+     "allowedNames": ["com.nizovn.androidchroot.client.c"]
+  },
+  "permissions": [
+    {
+      "service":"com.nizovn.androidchroot.client.c",
+      "inbound":["*"],
+      "outbound":["*"]
+    }
+  ]
+}

@@ -15,6 +15,6 @@ for ROOT in /proc/*/root; do
 done
 
 if [ "x$FOUND" = "x1" ]; then
-   $APP_PATH/kill.sh
+   $APP_PATH/scripts/kill.sh
 fi
 
