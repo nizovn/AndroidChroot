@@ -11,7 +11,7 @@ MainAssistant.prototype.setup = function() {
 	this.buttonmodelstart = {
 		label : "Start android && Start client",
 		buttonClass : "affirmative",
-		disabled: false
+		disabled: true
 	};
 	this.controller.setupWidget("StartButton", this.attributes, this.buttonmodelstart);
 	this.buttonmodelstop = {
@@ -122,9 +122,11 @@ MainAssistant.prototype.activate = function(event){
 	this.controller.serviceRequest('palm://com.nizovn.androidchroot.main.c', {
 					method: "getstate",
 					parameters: {"target": "files"},
-					onSuccess: function(){},
+					onSuccess: this.SuccessFiles.bind(this),
 					onFailure: this.FailureFiles.bind(this)
 				});
+};
+MainAssistant.prototype.SuccessFiles= function(event){
 	this.controller.serviceRequest('palm://com.nizovn.androidchroot.main.c', {
 					method: "getstate",
 					parameters: {"target": "swap"},
@@ -139,7 +141,9 @@ MainAssistant.prototype.activate = function(event){
 				});
 };
 MainAssistant.prototype.FailureFiles = function(event) {
-	this.controller.get('textFieldInfo').mojo.setValue("File "+event.file+" not found\n");
+	var text="File "+event.file+" not found\n";
+	text+="Fix this and restart the app\n";
+	this.controller.get('textFieldInfo').mojo.setValue(text);
 };
 MainAssistant.prototype.FailureSwap = function(event) {
 	var text=this.controller.get('textFieldInfo').mojo.getValue();
