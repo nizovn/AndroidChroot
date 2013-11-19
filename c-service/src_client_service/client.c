@@ -144,15 +144,24 @@ void open_uinput()
 
 }
 void send_sleep_or_wake(bool active){
-	send_uevent(uinput_fd, EV_KEY, KEY_POWER, 1);
-	send_uevent(uinput_fd, EV_SYN, SYN_REPORT, 0);
-	printf("Sending screen\n");
-	send_uevent(uinput_fd, EV_KEY, KEY_POWER, 0);
-	send_uevent(uinput_fd, EV_SYN, SYN_REPORT, 0);
 	int fd_wake=open(WAKE_FILE_NAME,O_NONBLOCK|O_WRONLY);
 	int fd_sleep=open(SLEEP_FILE_NAME,O_NONBLOCK|O_WRONLY);
-	if((fd_wake>0)&&(active))system("echo awake > " WAKE_FILE_NAME);
-	if((fd_sleep>0)&&(!active))system("echo sleeping > " SLEEP_FILE_NAME);
+	if((fd_wake>0)&&(active)){
+		send_uevent(uinput_fd, EV_KEY, KEY_POWER, 1);
+		send_uevent(uinput_fd, EV_SYN, SYN_REPORT, 0);
+		printf("Sending screen\n");
+		send_uevent(uinput_fd, EV_KEY, KEY_POWER, 0);
+		send_uevent(uinput_fd, EV_SYN, SYN_REPORT, 0);
+		system("echo awake > " WAKE_FILE_NAME);
+	}
+	if((fd_sleep>0)&&(!active)){
+		send_uevent(uinput_fd, EV_KEY, KEY_POWER, 1);
+		send_uevent(uinput_fd, EV_SYN, SYN_REPORT, 0);
+		printf("Sending screen\n");
+		send_uevent(uinput_fd, EV_KEY, KEY_POWER, 0);
+		send_uevent(uinput_fd, EV_SYN, SYN_REPORT, 0);
+		system("echo sleeping > " SLEEP_FILE_NAME);
+	}
 	close(fd_wake);
 	close(fd_sleep);
 }
