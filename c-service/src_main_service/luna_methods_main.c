@@ -95,8 +95,8 @@ bool get_method(LSHandle* lshandle, LSMessage *message, void *ctx) {
 		return true;
 	}
 	if(strcmp(name->child->text,"files")==0){
-		if(access(ROOT_PATH "/ramdisk.ext3", F_OK) == -1){
-			sprintf(reply, "{\"returnValue\": false, \"file\": \"ramdisk.ext3\"}");
+		if(access(ROOT_PATH "/root.ext3", F_OK) == -1){
+			sprintf(reply, "{\"returnValue\": false, \"file\": \"root.ext3\"}");
 			goto message;}
 		if(access(ROOT_PATH "/system.ext3", F_OK) == -1){
 			sprintf(reply, "{\"returnValue\": false, \"file\": \"system.ext3\"}");

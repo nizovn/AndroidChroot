@@ -4,7 +4,7 @@ if [ -f $ROOT_PATH/root/init ]; then
 echo "already running"
 exit 1
 fi
-mount $ROOT_PATH/ramdisk.ext3 $ROOT_PATH/root
+mount $ROOT_PATH/root.ext3 $ROOT_PATH/root
 mount $ROOT_PATH/system.ext3 $ROOT_PATH/root/system
 mount $ROOT_PATH/data.ext3 $ROOT_PATH/root/data
 mount $ROOT_PATH/cache.ext3 $ROOT_PATH/root/cache
